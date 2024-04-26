@@ -8,6 +8,7 @@ use App\Http\Livewire\Emptypage;
 use App\Http\Livewire\Error404;
 use App\Http\Livewire\Error500;
 use App\Http\Livewire\Error501;
+use App\Http\Livewire\Grade;
 use App\Http\Livewire\IMEI;
 use App\Http\Livewire\Index;
 use App\Http\Livewire\Profile;
@@ -21,12 +22,14 @@ use App\Http\Livewire\Variation;
 use App\Http\Livewire\Process;
 use App\Http\Livewire\Payouts;
 use App\Http\Livewire\Logout;
+use App\Http\Livewire\MoveInventory;
 use App\Http\Livewire\RMA;
 use App\Http\Livewire\Team;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\GetAllowedRoutesMiddleware;
 
 use App\Models\Routes_model;
+use Livewire\Commands\MoveCommand;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +86,9 @@ Route::get('export_rma_invoice/{id}', [RMA::class,'export_rma_invoice'])->name('
 
 Route::get('imei', IMEI::class)->name('view_imei');
 
+Route::get('move_inventory', MoveInventory::class)->name('move_inventory');
+Route::post('move_inventory/change_grade', [MoveInventory::class,'change_grade'])->name('move_inventory');
+
 
 Route::get('order', Order::class)->name('view_order');
 Route::get('check_new/{return?}', [Order::class,'updateBMOrdersNew'])->name('view_order');
@@ -104,6 +110,7 @@ Route::get('order/label/{id}', [Order::class,'getLabel'])->name('dispatch_order'
 Route::get('inventory', Inventory::class)->name('view_inventory');
 Route::get('inventory/get_products', [Inventory::class,'get_products'])->name('view_inventory');
 Route::get('inventory/get_variations/{id}', [Inventory::class,'get_variations'])->name('view_inventory');
+Route::post('inventory/export', [Inventory::class,'export'])->name('view_inventory');
 
 Route::get('product', Product::class)->name('view_product');
 Route::post('add_product', [Product::class,'add_product'])->name('add_product');
@@ -127,6 +134,13 @@ Route::post('insert-customer', [Customer::class,'insert_customer'])->name('add_c
 Route::get('update-status/{id}', [Customer::class,'update_status'])->name('edit_customer');
 Route::get('edit-customer/{id}', [Customer::class,'edit_customer'])->name('edit_customer');
 Route::post('update-customer/{id}', [Customer::class,'update_customer'])->name('edit_customer');
+
+Route::get('grade', Grade::class)->name('view_grade');
+Route::get('add-grade', [Grade::class,'add_grade'])->name('add_grade');
+Route::post('insert-grade', [Grade::class,'insert_grade'])->name('add_grade');
+Route::get('update-status/{id}', [Grade::class,'update_status'])->name('edit_grade');
+Route::get('edit-grade/{id}', [Grade::class,'edit_grade'])->name('edit_grade');
+Route::post('update-grade/{id}', [Grade::class,'update_grade'])->name('edit_grade');
 
 Route::get('get_permissions/{id}', [Team::class,'get_permissions'])->name('view_permissions');
 Route::post('toggle_role_permission/{roleId}/{permissionId}/{isChecked}', [Team::class, 'toggle_role_permission'])->name('change_permission');

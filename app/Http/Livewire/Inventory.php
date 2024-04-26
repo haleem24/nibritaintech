@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Exports\InventorysheetExport;
 use Livewire\Component;
 use App\Models\Color_model;
 use App\Models\Storage_model;
@@ -11,6 +12,7 @@ use App\Models\Brand_model;
 use App\Models\Stock_model;
 use App\Models\Products_model;
 use App\Models\Variation_model;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Inventory extends Component
 {
@@ -28,10 +30,48 @@ class Inventory extends Component
         $data['grades'] = Grade_model::pluck('name','id');
         $data['categories'] = Category_model::get();
         $data['brands'] = Brand_model::get();
-        $data['stocks'] = Stock_model::where('status',1)
+        $stocks = Stock_model::where('stock.status',1)
 
-        ->when(request('variation') != '', function ($q) {
-            return $q->where('variation_id', request('variation'));
+        ->when(request('storage') != '', function ($q) {
+            return $q->whereHas('variation', function ($q) {
+                $q->where('storage', request('storage'));
+            });
+        })
+        ->when(request('category') != '', function ($q) {
+            return $q->whereHas('variation.product', function ($q) {
+                $q->where('category', request('category'));
+            });
+        })
+        ->when(request('brand') != '', function ($q) {
+            return $q->whereHas('variation.product', function ($q) {
+                $q->where('brand', request('brand'));
+            });
+        })
+        ->when(request('product') != '', function ($q) {
+            return $q->whereHas('variation', function ($q) {
+                $q->where('product_id', request('product'));
+            });
+        })
+        ->when(request('grade') != '', function ($q) {
+            return $q->whereHas('variation', function ($q) {
+                $q->where('grade', request('grade'));
+            });
+        });
+
+
+        // ->orderBy($sort, $by) // Order by product name
+        $data['stocks'] = $stocks
+        ->paginate($per_page)
+        ->onEachSide(5)
+        ->appends(request()->except('page'));
+
+
+        $data['average_cost'] = Stock_model::where('stock.status',1)
+
+        ->when(request('storage') != '', function ($q) {
+            return $q->whereHas('variation', function ($q) {
+                $q->where('storage', request('storage'));
+            });
         })
         ->when(request('category') != '', function ($q) {
             return $q->whereHas('variation.product', function ($q) {
@@ -53,11 +93,11 @@ class Inventory extends Component
                 $q->where('grade', request('grade'));
             });
         })
-
-        // ->orderBy($sort, $by) // Order by product name
-        ->paginate($per_page)
-        ->onEachSide(5)
-        ->appends(request()->except('page'));
+        ->join('order_items', 'stock.id', '=', 'order_items.stock_id')
+        ->selectRaw('AVG(order_items.price) as average_price')
+        ->selectRaw('SUM(order_items.price) as total_price')
+        // ->pluck('average_price')
+        ->first();
 
         return view('livewire.inventory')->with($data);
     }
@@ -83,5 +123,10 @@ class Inventory extends Component
 
         Products_model::where('id', $id)->update(request('update'));
         return redirect()->back();
+    }
+
+    public function export(){
+
+        return Excel::download(new InventorysheetExport, 'inventory.xlsx');
     }
 }

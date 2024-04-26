@@ -54,7 +54,8 @@
                     <div class="card-header">
                         <h4 class="card-title">Variation</h4>
                     </div>
-                    <select name="variation" class="form-control form-select select2 test">
+                    <input type="text" list="variations" name="variation" class="form-control" required>
+                    <datalist id="variations">
                         <option value="">Select</option>
                         @foreach ($all_variations as $variation)
                             @php
@@ -66,19 +67,19 @@
                             @endphp
                             <option value="{{$variation->id}}" @if(isset($_GET['variation']) && $variation->id == $_GET['variation']) {{'selected'}}@endif>{{$variation->product->model." ".$storage}}</option>
                         @endforeach
-                    </select>
+                    </datalist>
                 </div>
                 <div class="col-lg-3 col-xl-3 col-md-4 col-sm-6">
                     <div class="card-header">
                         <h4 class="card-title">IMEI</h4>
                     </div>
-                    <input type="text" class="form-control" name="imei" placeholder="Enter IMEI" value="@isset($_GET['imei']){{$_GET['imei']}}@endisset">
+                    <input type="text" class="form-control" name="imei" placeholder="Enter IMEI" value="@isset($_GET['imei']){{$_GET['imei']}}@endisset" required>
                 </div>
                 <div class="col-lg-3 col-xl-3 col-md-4 col-sm-6">
                     <div class="card-header">
                         <h4 class="card-title">Cost</h4>
                     </div>
-                    <input type="text" class="form-control" name="price" placeholder="Enter Price" value="@isset($_GET['price']){{$_GET['price']}}@endisset">
+                    <input type="text" class="form-control" name="price" placeholder="Enter Price" value="@isset($_GET['price']){{$_GET['price']}}@endisset" required>
                 </div>
                 <div class="col-lg-3 col-xl-3 col-md-4 col-sm-6 align-self-end mb-1 tx-center">
                     <h4>Add Purchased Item</h4>
@@ -88,6 +89,62 @@
         </form>
 
         <br>
+        @if (count($missing_stock)>0)
+
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <div class="d-flex justify-content-between">
+                            <h4 class="card-title mg-b-0">Latest Added Items</h4>
+                        </div>
+                    </div>
+                    <div class="card-body"><div class="table-responsive" style="max-height: 250px">
+                            <table class="table table-bordered table-hover mb-0 text-md-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th><small><b>No</b></small></th>
+                                        <th><small><b>Variation</b></small></th>
+                                        <th><small><b>IMEI | Serial Number</b></small></th>
+                                        <th><small><b>Vendor</b></small></th>
+                                        @if (session('user')->hasPermission('view_cost'))
+                                        <th><small><b>Cost</b></small></th>
+                                        @endif
+                                        <th><small><b>Creation Date</b></small></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $i = 0;
+                                    @endphp
+                                    @foreach ($missing_stock as $item)
+                                        <tr>
+                                            <td>{{ $i + 1 }}</td>
+                                            <td>{{ $products[$item->variation->product_id]}} {{$storages[$item->variation->storage] ?? null}} {{$colors[$item->variation->color] ?? null}} {{$grades[$item->variation->grade] }}</td>
+                                            <td data-stock="{{ $item->stock_id }}">{{ $item->stock->imei.$item->stock->serial_number }}</td>
+                                            <td>{{ $item->stock->order->customer->first_name }}</td>
+                                            @if (session('user')->hasPermission('view_cost'))
+                                            <td>{{ $currency.number_format($item->price,2) }}</td>
+                                            @endif
+                                            <td style="width:220px">{{ $item->created_at }}</td>
+                                            <td><a href="{{ url('delete_rma_item').'/'.$item->id }}"><i class="fa fa-trash"></i></a></td>
+                                        </tr>
+                                        @php
+                                            $i ++;
+                                        @endphp
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        <br>
+                    </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @endif
         <br>
 
         <div class="row">
@@ -138,7 +195,7 @@
                                     @endphp
                                         <tr>
                                             <td>{{ $i }}</td>
-                                            <td>{{ $item->imei.$item->serial_number }}</td>
+                                            <td data-stock="{{ $item->id }}">{{ $item->imei.$item->serial_number }}</td>
                                             @if (session('user')->hasPermission('view_cost'))
                                             <td>{{ $currency.$item->purchase_item->price }}</td>
                                             @endif

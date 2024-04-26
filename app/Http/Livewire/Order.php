@@ -272,6 +272,7 @@ class Order extends Component
         ->orderBy('grade', 'desc')
         ->get();
 
+        $data['missing_stock'] = Order_item_model::where(['order_id'=>$order_id,'stock_id'=>null])->get();
 
         $data['all_variations'] = Variation_model::where('grade',9)->get();
         $data['order'] = Order_model::find($order_id);
@@ -355,8 +356,16 @@ class Order extends Component
                 $i = null;
                 $s = $d[$imei];
             }
-
+            if(trim($d[$imei]) == ''){
+                continue;
+            }
+            if(trim($n) == ''){
+                continue;
+            }
             $c = $d[$cost];
+            if(trim($c) == ''){
+                continue;
+            }
             $names = explode(" ",$n);
             $last = end($names);
             if(in_array($last, $storages)){
@@ -416,7 +425,7 @@ class Order extends Component
 
             session()->put('error', $error);
         }
-        return redirect()->back();
+        return redirect(url('purchase/detail').'/'.$order->id);
     }
     public function add_purchase_item($order_id){
 
@@ -428,7 +437,11 @@ class Order extends Component
             $s = request('imei');
         }
 
-        $variation = Variation_model::firstOrNew(['id' => request('variation')]);
+        $variation = Variation_model::find(request('variation'));
+        if($variation == null){
+            session()->put('error', 'Variation Not Found');
+            return redirect()->back();
+        }
         $variation->stock += 1;
         $variation->status = 1;
         $variation->save();
@@ -560,6 +573,10 @@ class Order extends Component
                         return redirect()->back();
 
                     }
+                    if($stock[$i]->status != 1){
+                        session()->put('error', "Stock Already Sold");
+                        return redirect()->back();
+                    }
                     if($stock[$i]){
                         if($stock[$i]->variation->storage != null){
                             $storage = $stock[$i]->variation->storage_id->name . " - ";
@@ -587,6 +604,10 @@ class Order extends Component
                     $stock[$i] = Stock_model::where('serial_number',trim($imei))->first();
                     if(!$stock[$i]){
                         session()->put('error', "Stock not Found");
+                        return redirect()->back();
+                    }
+                    if($stock[$i]->status != 1){
+                        session()->put('error', "Stock Already Sold");
                         return redirect()->back();
                     }
                     if($stock[$i]){
@@ -642,7 +663,7 @@ class Order extends Component
                         // dd("Hello");
                         $detail = $bm->shippingOrderlines($order->reference_id,$sku[0],false,$orderObj->tracking_number,$serial);
                     }elseif($indexes > 0 && count($each_sku) == 1){
-                        $detail = $bm->orderlineIMEI($order->reference_id,$sku[0],trim($imeis[0]),$orderObj->tracking_number,$serial);
+                        $detail = $bm->orderlineIMEI($order->reference_id,trim($imeis[0]),$serial);
                     }else{
 
                     }
@@ -660,10 +681,11 @@ class Order extends Component
 
 
             foreach ($skus as $each) {
+                $inde = 0;
                 foreach ($each as $idt => $s) {
                     $variation = Variation_model::where('sku',$s)->first();
                     $item = Order_item_model::where(['order_id'=>$id, 'variation_id'=>$variation->id])->first();
-                    if ($idt != 0) {
+                    if ($inde != 0) {
 
                         $new_item = new Order_item_model();
                         $new_item->order_id = $id;
@@ -679,6 +701,7 @@ class Order extends Component
                     // $new_item->linked_id = Order_item_model::where(['order_id'=>$stock[$idt]->order_id,'stock_id'=>$stock[$idt]->id])->first()->id;
                     }
                     $new_item->save();
+                    $inde ++;
                 }
             }
 
@@ -706,7 +729,7 @@ class Order extends Component
             </script>';
 
         }
-        if($detail->orderlines == null){
+        if(!$detail->orderlines){
             dd($detail);
         }
         if($detail->orderlines[0]->imei == null && $detail->orderlines[0]->serial_number  == null){
@@ -761,7 +784,7 @@ class Order extends Component
     }
     public function correction(){
         $item = Order_item_model::find(request('correction')['item_id']);
-        if($item->order->processed_at > Carbon::now()->subHour(1)){
+        if($item->order->processed_at > Carbon::now()->subHour(1) || session('user_id') == 1){
 
             $imei = request('correction')['imei'];
             $serial_number = null;

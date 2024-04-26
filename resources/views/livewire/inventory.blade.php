@@ -37,57 +37,61 @@
         <form action="" method="GET" id="search">
             <div class="row">
 
-                <div class="col-lg-2 col-xl-2 col-md-2 col-sm-2">
-                    <div class="card-header">
+                <div class="col-md col-sm-2">
+                    {{-- <div class="card-header">
                         <h4 class="card-title mb-1">Category</h4>
-                    </div>
-                    <select name="category" class="form-control form-select select2" data-bs-placeholder="Select Category" onchange="selectCategory(this.value)">
-                        <option value="">Select</option>
+                    </div> --}}
+                    <select name="category" class="form-control form-select" data-bs-placeholder="Select Category" onchange="selectCategory(this.value)">
+                        <option value="">Category</option>
                         @foreach ($categories as $category)
                             <option value="{{$category->id}}" @if(isset($_GET['category']) && $category->id == $_GET['category']) {{'selected'}}@endif>{{$category->name}}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-lg-2 col-xl-2 col-md-2 col-sm-2">
-                    <div class="card-header">
+                <div class="col-md col-sm-2">
+                    {{-- <div class="card-header">
                         <h4 class="card-title mb-1">Brand</h4>
-                    </div>
-                    <select name="brand" class="form-control form-select select2" data-bs-placeholder="Select Brand" onchange="selectBrand(this.value)">
-                        <option value="">Select</option>
+                    </div> --}}
+                    <select name="brand" class="form-control form-select" data-bs-placeholder="Select Brand" onchange="selectBrand(this.value)">
+                        <option value="">Brand</option>
                         @foreach ($brands as $brand)
                             <option value="{{$brand->id}}" @if(isset($_GET['brand']) && $brand->id == $_GET['brand']) {{'selected'}}@endif>{{$brand->name}}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-lg-3 col-xl-3 col-md-3 col-sm-3">
-                    <div class="card-header">
+                    {{-- <div class="card-header">
                         <h4 class="card-title mb-1">Model</h4>
+                    </div> --}}
+                    <div class="form-floating">
+                        <input type="text" name="product" class="form-control" data-bs-placeholder="Select Model" list="product-menu">
+                        <label for="product">Product</label>
                     </div>
-                    <select name="product" class="form-control form-select select2" data-bs-placeholder="Select Model" id="product-menu" onchange="selectProduct(this.value)">
-                        <option value="">Select</option>
+                    <datalist id="product-menu">
+                    </datalist>
+                </div>
+                <div class="col-md col-sm-2">
+                    {{-- <div class="card-header">
+                        <h4 class="card-title mb-1">Storage</h4>
+                    </div> --}}
+                    <select name="storage" class="form-control form-select">
+                        <option value="">Storage</option>
+                        @foreach ($storages as $id=>$name)
+                            <option value="{{ $id }}" @if(isset($_GET['storage']) && $id == $_GET['storage']) {{'selected'}}@endif>{{ $name }}</option>
+                        @endforeach
                     </select>
                 </div>
-                <div class="col-lg-3 col-xl-3 col-md-3 col-sm-3">
-                    <div class="card-header">
-                        <h4 class="card-title mb-1">Variation</h4>
-                    </div>
-                    <select name="variation" class="form-control form-select select2" data-bs-placeholder="Select Variation" id="variation-menu">
-                        <option value="">Select</option>
-                    </select>
-                </div>
-                <div class="col-lg-2 col-xl-2 col-md-2 col-sm-2">
-                    <div class="card-header">
+                <div class="col-md col-sm-2">
+                    {{-- <div class="card-header">
                         <h4 class="card-title mb-1">Grade</h4>
-                    </div>
-                    <select name="grade" class="form-control form-select select2">
-                        <option value="">Select</option>
+                    </div> --}}
+                    <select name="grade" class="form-control form-select">
+                        <option value="">Grade</option>
                         @foreach ($grades as $id=>$name)
                             <option value="{{ $id }}" @if(isset($_GET['grade']) && $id == $_GET['grade']) {{'selected'}}@endif>{{ $name }}</option>
                         @endforeach
                     </select>
                 </div>
-            </div>
-            <div class=" p-2">
                 <button class="btn btn-primary pd-x-20" type="submit">{{ __('locale.Search') }}</button>
                 <a href="{{url(session('url').'inventory')}}?per_page=10" class="btn btn-default pd-x-20">Reset</a>
             </div>
@@ -103,19 +107,19 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         selectBrand({{ request('brand') }})
                     })
-                    @if (request('product'))
-                        document.addEventListener('DOMContentLoaded', function() {
-                            selectProduct({{ request('product') }})
-                        })
-                    @endif
+                    // @if (request('product'))
+                    //     document.addEventListener('DOMContentLoaded', function() {
+                    //         selectProduct({{ request('product') }})
+                    //     })
+                    // @endif
                 @endif
             @else
                 let selectedCategoryId = null;
             @endif
 
-            const colorData = {!! json_encode($colors) !!};
-            const storageData = {!! json_encode($storages) !!};
-            const gradeData = {!! json_encode($grades) !!};
+            // const colorData = {!! json_encode($colors) !!};
+            // const storageData = {!! json_encode($storages) !!};
+            // const gradeData = {!! json_encode($grades) !!};
 
             function selectCategory(categoryId) {
                 selectedCategoryId = categoryId;
@@ -127,7 +131,7 @@
                         .then(response => response.json())
                         .then(products => {
                             const productMenu = document.getElementById('product-menu');
-                            productMenu.innerHTML = '<option value="">Select</option>'; // Clear existing variation menu items
+                            productMenu.innerHTML = '<option value="">Model</option>'; // Clear existing variation menu items
 
                             products.forEach(product => {
                                 const productLink = document.createElement('option');
@@ -147,33 +151,33 @@
                     console.error('Please select a category first.');
                 }
             }
-            function selectProduct(productId) {
-                // Use the selectedCategoryId variable here to fetch products based on both category and brand
-                if (selectedCategoryId !== null) {
-                    fetch("{{ url(session('url').'inventory') }}/get_variations/" + productId)
-                        .then(response => response.json())
-                        .then(variations => {
-                            const variationMenu = document.getElementById('variation-menu');
-                            variationMenu.innerHTML = '<option value="">Select</option>'; // Clear existing variation menu items
+            // function selectProduct(productId) {
+            //     // Use the selectedCategoryId variable here to fetch products based on both category and brand
+            //     if (selectedCategoryId !== null) {
+            //         fetch("{{ url(session('url').'inventory') }}/get_variations/" + productId)
+            //             .then(response => response.json())
+            //             .then(variations => {
+            //                 const variationMenu = document.getElementById('variation-menu');
+            //                 variationMenu.innerHTML = '<option value="">Select</option>'; // Clear existing variation menu items
 
-                            variations.forEach(variation => {
-                                const variationLink = document.createElement('option');
-                                variationLink.value = `${variation.id}`;
-                                variationLink.innerHTML =  colorData[variation.color] + ' ' + storageData[variation.storage] + ' ' + gradeData[variation.grade];
-                                @if (request('variation'))
-                                    // Check if the request parameter matches the product's ID
-                                    if (variation.id == {{ request('variation') }}) {
-                                        variationLink.selected = true; // Set the 'selected' attribute
-                                    }
-                                @endif
-                                variationMenu.appendChild(variationLink);
-                            });
-                        })
-                        .catch(error => console.error('Error fetching products:', error));
-                } else {
-                    console.error('Please select a category first.');
-                }
-            }
+            //                 variations.forEach(variation => {
+            //                     const variationLink = document.createElement('option');
+            //                     variationLink.value = `${variation.id}`;
+            //                     variationLink.innerHTML =  colorData[variation.color] + ' ' + storageData[variation.storage] + ' ' + gradeData[variation.grade];
+            //                     @if (request('variation'))
+            //                         // Check if the request parameter matches the product's ID
+            //                         if (variation.id == {{ request('variation') }}) {
+            //                             variationLink.selected = true; // Set the 'selected' attribute
+            //                         }
+            //                     @endif
+            //                     variationMenu.appendChild(variationLink);
+            //                 });
+            //             })
+            //             .catch(error => console.error('Error fetching products:', error));
+            //     } else {
+            //         console.error('Please select a category first.');
+            //     }
+            // }
         </script>
 
         <div class="row">
@@ -182,13 +186,31 @@
             </div>
         </div>
         <br>
+        <div class="d-flex justify-content-between">
+            <div class="">
+                Vendor wise average:
+            </div>
+            <div class="d-flex">
+                <button class="btn btn-sm btn-secondary pd-x-20 " type="submit" form="export" name="inventorysheet" value="1">Export Sheet</button>
+            </div>
+        </div>
+        <form id="export" method="POST" target="_blank" action="{{url(session('url').'inventory/export')}}">
+            @csrf
+            <input type="hidden" name="category" value="{{ Request::get('category') }}">
+            <input type="hidden" name="brand" value="{{ Request::get('brand') }}">
+            <input type="hidden" name="product" value="{{ Request::get('product') }}">
+            <input type="hidden" name="storage" value="{{ Request::get('storage') }}">
+            <input type="hidden" name="grade" value="{{ Request::get('grade') }}">
+            <input type="hidden" name="per_page" value="{{ Request::get('per_page') }}">
+        </form>
+        <br>
         <div class="row">
             <div class="col-xl-12">
                 <div class="card">
                     <div class="card-header pb-0">
                         <div class="d-flex justify-content-between">
                             <h5 class="card-title mg-b-0">{{ __('locale.From') }} {{$stocks->firstItem()}} {{ __('locale.To') }} {{$stocks->lastItem()}} {{ __('locale.Out Of') }} {{$stocks->total()}} </h5>
-
+                            <h5>Average Cost: {{ number_format($average_cost->average_price,2) }} | Total Cost: {{ number_format($average_cost->total_price,2) }}</h5>
                             <div class=" mg-b-0">
                                 <form method="get" action="" class="row form-inline">
                                     <label for="perPage" class="card-title inline">per page:</label>
@@ -202,7 +224,7 @@
                                     <input type="hidden" name="category" value="{{ Request::get('category') }}">
                                     <input type="hidden" name="brand" value="{{ Request::get('brand') }}">
                                     <input type="hidden" name="product" value="{{ Request::get('product') }}">
-                                    <input type="hidden" name="variation" value="{{ Request::get('variation') }}">
+                                    <input type="hidden" name="storage" value="{{ Request::get('storage') }}">
                                     <input type="hidden" name="grade" value="{{ Request::get('grade') }}">
                                     <input type="hidden" name="page" value="{{ Request::get('page') }}">
                                 </form>

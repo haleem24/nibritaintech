@@ -17,7 +17,7 @@
 <br>
     @section('content')
 
-<div class="toast-container position-fixed top-0 end-0 p-3">
+<div class="toast-container position-fixed top-0 end-0 p-5" style="z-index: 1000;">
     @if (session('error'))
             <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header text-danger">
@@ -66,20 +66,19 @@
             </div>
         </div>
         <br>
-        <form action="{{ url('imei')}}" method="GET" id="search">
-            <div class="row">
-                <div class="col-lg-2 col-xl-2 col-md-4 col-sm-6">
-                    <div class="card-header">
-                        <h4 class="card-title mb-1">IMEI</h4>
-                    </div>
-                    <input type="text" class="form-control" name="imei" placeholder="Enter IMEI" value="@isset($_GET['imei']){{$_GET['imei']}}@endisset">
-                </div>
-            </div>
-            <div class=" p-2">
-                <button class="btn btn-primary pd-x-20" type="submit">{{ __('locale.Search') }}</button>
-            </div>
 
-        </form>
+        <div class="d-flex justify-content-between" style="border-bottom: 1px solid rgb(216, 212, 212);">
+
+            <div class="p-2">
+                <form action="{{ url('imei')}}" method="GET" id="search" class="form-inline">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" name="imei" placeholder="Enter IMEI" value="@isset($_GET['imei']){{$_GET['imei']}}@endisset">
+                        <label for="">IMEI</label>
+                    </div>
+                        <button class="btn btn-primary pd-x-20" type="submit">{{ __('locale.Search') }}</button>
+                </form>
+            </div>
+        </div>
         <br>
         <div class="row">
             <div class="col-md-12" style="border-bottom: 1px solid rgb(216, 212, 212);">
@@ -87,6 +86,7 @@
             </div>
         </div>
         <br>
+        @if (isset($stock))
 
         <div class="row">
             <div class="col-xl-12">
@@ -130,7 +130,16 @@
 
                                             <tr>
                                                 <td title="{{ $item->id }}">{{ $i + 1 }}</td>
-                                                <td>{{ $order->reference_id }}</td>
+                                                @if ($order->order_type_id == 1)
+
+                                                    <td><a href="{{url(session('url').'purchase/detail/'.$order->id)}}">{{ $order->reference_id }}</a></td>
+                                                @elseif ($order->order_type_id == 2)
+                                                    <td><a href="{{url(session('url').'rma/detail/'.$order->id)}}">{{ $order->reference_id }}</a></td>
+                                                @elseif ($order->order_type_id == 5)
+                                                    <td><a href="{{url(session('url').'wholesale/detail/'.$order->id)}}">{{ $order->reference_id }}</a></td>
+                                                @elseif ($order->order_type_id == 3)
+                                                    <td>{{ $order->reference_id }}</td>
+                                                @endif
                                                 <td>{{ $order->order_type->name }}</td>
                                                 <td>{{ $order->customer->first_name." ".$order->customer->last_name }}</td>
                                                 <td>
@@ -165,15 +174,8 @@
                                                 <td>
                                                     <a href="javascript:void(0);" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fe fe-more-vertical  tx-18"></i></a>
                                                     <div class="dropdown-menu">
-                                                        <a class="dropdown-item" href="{{url(session('url').'order')}}/refresh/{{ $order->reference_id }}">Refresh</a>
-                                                        @if ($item->order->processed_at > $last_hour)
-                                                        <a class="dropdown-item" id="correction_{{ $item->id }}" href="javascript:void(0);" data-bs-target="#correction_model" data-bs-toggle="modal" data-bs-reference="{{ $order->reference_id }}" data-bs-item="{{ $item->id }}"> Correction </a>
-                                                        @endif
-                                                        @if ($order->status == 3)
 
-                                                        <a class="dropdown-item" href="{{url(session('url').'order')}}/recheck/{{ $order->reference_id }}/true" target="_blank">Invoice</a>
-                                                        @endif
-                                                        <a class="dropdown-item" href="https://backmarket.fr/bo_merchant/orders/all?orderId={{ $order->reference_id }}&see-order-details={{ $order->reference_id }}" target="_blank">View in Backmarket</a>
+                                                        <a class="dropdown-item" href="{{url(session('url').'order')}}/delete_item/{{ $item->id }}">Delete</a>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -192,40 +194,7 @@
             </div>
         </div>
 
-        <div class="modal" id="correction_model">
-            <div class="modal-dialog wd-xl-400" role="document">
-                <div class="modal-content">
-                    <div class="modal-body pd-sm-40">
-                        <button aria-label="Close" class="close pos-absolute t-15 r-20 tx-26" data-bs-dismiss="modal"
-                            type="button"><span aria-hidden="true">&times;</span></button>
-                        <h5 class="modal-title mg-b-5">Update Order</h5>
-                        <hr>
-                        <form action="{{ url('order/correction') }}" method="POST">
-                            @csrf
-                            <div class="form-group">
-                                <label for="">Order Number</label>
-                                <input class="form-control" name="correction[id]" type="text" id="order_reference" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="">Tester</label>
-                                <input class="form-control" placeholder="input Tester Initial" name="correction[tester]" type="text">
-                            </div>
-                            <div class="form-group">
-                                <label for="">IMEI / Serial Number</label>
-                                <input class="form-control" placeholder="input IMEI / Serial Number" name="correction[imei]" type="text" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="">Reason</label>
-                                <textarea class="form-control" name="correction[reason]">Wrong Dispatch</textarea>
-                            </div>
-                            <input type="hidden" id="item_id" name="correction[item_id]" value="">
-
-                            <button class="btn btn-primary btn-block">{{ __('locale.Submit') }}</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @endif
 
     @endsection
 
